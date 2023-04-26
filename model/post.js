@@ -1,4 +1,7 @@
 const multer = require('multer');
+const {newPost,getPost} = require("../schema/post")
+
+//使用multer處理postImage的圖片
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/')
@@ -8,17 +11,34 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage: storage });
+
+
 const postModel ={
+    getArticle:(req,res)=>{
+      getPost("6449471c10d0f37e5e204719")
+    },
     postArticle: (req, res) => {
         const para = JSON.parse(req.body.para)
         const title = JSON.parse(req.body.title)
         const image =JSON.parse(req.body.image)
+        const paras = para.blocks.map((item)=>{
+          const obj = {
+            type:item.type,
+            text:item.data.text || item.data.code
+          }
+          return obj
+        })
         const data ={
-            title:title.blocks[0].data.text,
-            image:image.blocks[0].data.file,
-            para:para.blocks[0],
+            category:"軟工板",
+            userID:"Daniel Yu",
+            createdAt:new Date(),
+            data:{
+              banner:image.blocks[0].data.file.url,
+              title:title.blocks[0].data.text,
+              paragraph:[...paras]
+            }
         }
-        console.log(data)
+        newPost(data)
     },
     postImage: function(req, res) {
         upload.single('image')(req, res, function(err) {
@@ -34,7 +54,7 @@ const postModel ={
                 });
               }
         });
-      }
+    }
 }
 
 module.exports = postModel;

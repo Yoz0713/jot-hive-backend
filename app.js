@@ -2,6 +2,8 @@ const postController = require("./controller/post")
 const express = require("express")
 const cors = require("cors")
 const bodyParser = require('body-parser');
+const db = require("./database");
+
 let app = express();
 app.use(cors(
     {
@@ -22,7 +24,8 @@ app.get("/",(req,res)=>{
     res.send("hello")
 })
 
-app.post("/newPost",postController.postArticle)
+app.post("/post",postController.postArticle)
+app.get("/post",postController.getArticle)
 app.post("/postImage",postController.postImage)
 let port = 3030;
 app.listen(port);
