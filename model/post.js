@@ -15,7 +15,8 @@ const upload = multer({ storage: storage });
 
 const postModel ={
     getArticle:(req,res)=>{
-      getPost("6449471c10d0f37e5e204719")
+      console.log(req)
+      getPost("6449471c10d0f37e5e204719");
     },
     postArticle: (req, res) => {
         const para = JSON.parse(req.body.para)
