@@ -27,5 +27,5 @@ app.get("/",(req,res)=>{
 app.post("/post",postController.postArticle)
 app.get("/post",postController.getArticle)
 app.post("/postImage",postController.postImage)
-let port = 3030;
+let port = process.env.PORT || 3030;
 app.listen(port);
