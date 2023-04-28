@@ -50,7 +50,7 @@ const postModel ={
                 res.status(200).json({
                     success : 1,
                     file: {
-                        url : "http://localhost:3030/uploads/"+req.file.filename,
+                        url : process.env.PORT+"/uploads/"+ req.file.filename||"http://localhost:3030/uploads/"+req.file.filename,
                     }
                 });
               }
