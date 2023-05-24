@@ -18,7 +18,6 @@ const Post = mongoose.model("Post", postSchema);
 
 const newPost = ({ category, userID, data }) => {
 
-
   const post = new Post({
     category: category,
     userID: userID,
@@ -40,8 +39,15 @@ const newPost = ({ category, userID, data }) => {
 
 async function getPost(_id) {
     try {
-      const result = await Post.findOne({ _id: new ObjectId(_id)});
-      console.log(result);
+      let result;
+      if(_id == "all"){
+        result = await Post.find().sort({ createdAt: 'desc' });;
+      }else{
+        result = await Post.findOne({ _id: new ObjectId(_id)});
+      }
+       
+      
+      return result;
     } catch (err) {
       console.error(err);
     }
