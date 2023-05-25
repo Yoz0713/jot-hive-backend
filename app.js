@@ -7,9 +7,7 @@ const session = require('express-session');
 const db = require("./database");
 
 let app = express();
-app.use(cors({
-  origin: 'https://jot-hive-blog-note.vercel.app' // 允許的前端來源
-}));
+app.use(cors());
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));

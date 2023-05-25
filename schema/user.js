@@ -14,7 +14,7 @@ const User = mongoose.model("user", userSchema);
 
 const newUser =(data)=>{
     const user = new User({
-        username:data.usename,
+        username:data.username,
         password:data.password,
         avatar:data.avatar,
         role:data.role,

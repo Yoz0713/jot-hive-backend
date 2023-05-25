@@ -7,6 +7,7 @@ const userModel ={
         let data = await req.body;
         let hashValue = await bcrypt.hash(data.password,saltRounds);
         data.password = hashValue
+        console.log(data)
         data={
             ...data,
             avatart:"/uploads/default-avatar.svg",
