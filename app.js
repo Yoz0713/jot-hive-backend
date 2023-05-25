@@ -1,4 +1,5 @@
 const postController = require("./controller/post")
+const userController = require("./controller/user")
 const express = require("express")
 const cors = require("cors")
 const bodyParser = require('body-parser');
@@ -23,6 +24,7 @@ app.use(
 app.get("/",(req,res)=>{
     res.send("hello")
 })
+app.post("/user/signUp",userController.register)
 app.get("/loginChecking",(req,res)=>{
     if (req.session.loggedIn) {
         res.json({ loggedIn: true });
