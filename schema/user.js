@@ -21,12 +21,23 @@ const newUser =(data)=>{
         createdAt:new Date(),
     })
 
-    return user.save().then((data)=>{
+    user.save().then((data)=>{
         console.log("成功儲存資料到user collections")
         console.log("資料為:"+data)
       }).catch((e)=>{
         console.log(e)
       });
+      
 }
 
-module.exports={newUser};
+const findUserByMail =async (req)=>{
+  try {
+    const res = await User.findOne({ username: req.body.username });
+    return res;
+  } catch (error) {
+    console.error(error);
+    // Handle the error appropriately
+  }
+}
+
+module.exports={newUser,findUserByMail};
