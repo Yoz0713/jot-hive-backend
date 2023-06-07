@@ -1,12 +1,13 @@
-const postController = require("./controller/post")
-const userController = require("./controller/user")
+const postController = require("./controller/post")//引入post
+const userController = require("./controller/user")//引入useer
 const express = require("express")
 const cors = require("cors")
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const db = require("./database")
+const passport = require('passport')
 const {findUserByMail} = require("./schema/user")
-
+const checkEnvironment = require("./utils/checkEnvironment")
 let app = express();
 //cors跨源
 app.use(cors());
@@ -20,7 +21,9 @@ app.use(
       saveUninitialized: false,
     })
   );
-
+  app.use(passport.initialize())
+  app.use(passport.session())
+  require('./passport')
   //確認email格式以及是否註冊過
   function checkSignUp(req,res,next){
     const emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
@@ -51,6 +54,19 @@ app.get("/loginChecking",(req,res)=>{
         res.json({ loggedIn: false });
       }
 })
+//google登入
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }))
+app.get(
+  '/auth/google/callback',
+  passport.authenticate('google', {
+    successRedirect: checkEnvironment.client(""),
+    failureRedirect: '/login'
+  })
+)
+
+
+
+
 
 //post文章
 app.post("/post",postController.postArticle)
