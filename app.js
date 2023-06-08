@@ -7,7 +7,8 @@ const session = require('express-session');
 const db = require("./database")
 const passport = require('passport')
 const {findUserByMail} = require("./schema/user")
-const checkEnvironment = require("./utils/checkEnvironment")
+const checkEnvironment = require("./utils/checkEnvironment");
+const bcrypt = require("bcrypt");
 let app = express();
 //cors跨源
 app.use(cors());
@@ -21,9 +22,11 @@ app.use(
       saveUninitialized: false,
     })
   );
+  //passport
   app.use(passport.initialize())
   app.use(passport.session())
   require('./passport')
+
   //確認email格式以及是否註冊過
   function checkSignUp(req,res,next){
     const emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
@@ -39,19 +42,46 @@ app.use(
       })
     }
   }
-
+  function checkLogin(req,res,next){
+    findUserByMail(req).then((user)=>{
+      if(!user){
+        res.status(400).send({ error: `尚未註冊JotHive會員` });
+      }else{
+       const hashedPassword = user.password;
+       const plainPassword = req.body.password;
+       bcrypt.compare(plainPassword, hashedPassword, (err, isMatch) => {
+        if (err) {
+          // 处理错误
+          console.error(err);
+          return;
+        }
+        if (isMatch) {
+          next()
+        } else {
+          // 密码不匹配，验证失败
+          res.status(400).send({ error: `密碼錯誤` });
+        }
+      });
+     
+      }
+    })
+ 
+  }
 
 app.get("/",(req,res)=>{
     res.send("hello")
 })
 //註冊使用者
 app.post("/user/signUp",checkSignUp,userController.register)
+//帳密登入
+app.post("/user/login",checkLogin,userController.login)
 //確認登入狀態
-app.get("/loginChecking",(req,res)=>{
-    if (req.session.loggedIn) {
-        res.json({ loggedIn: true });
+app.get("/loginStatus",(req,res)=>{
+  console.log(req.session)
+    if (req.session.isLoggedIn) {
+        res.send(true);
       } else {
-        res.json({ loggedIn: false });
+        res.send(false);
       }
 })
 //google登入
@@ -59,7 +89,7 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }))
 app.get(
   '/auth/google/callback',
   passport.authenticate('google', {
-    successRedirect: checkEnvironment.client(""),
+    successRedirect: checkEnvironment.client(),
     failureRedirect: '/login'
   })
 )

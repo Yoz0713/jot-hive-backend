@@ -1,6 +1,5 @@
 const {newUser} =require("../schema/user");
 const bcrypt = require("bcrypt");
-
 const userModel ={
     register:async(req,res)=>{
         const saltRounds = 12;
@@ -13,6 +12,12 @@ const userModel ={
             role:"normal",
         }
         newUser(data)
+        res.status(200).send({ success: `成功註冊JotHive` });
+    },
+    login:async(req,res)=>{
+        req.session.isLoggedIn = true
+        console.log(req.session)
+        res.status(200).send({ success: `成功登入JotHive` });
     }
 } 
 module.exports = userModel;
