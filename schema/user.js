@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const {Schema} = mongoose;
 
 const userSchema=new Schema({
-  userID:String,
+    userID:String,
+    name:String,
     username:String,
     password:String,
     avatar:String,
@@ -16,6 +17,7 @@ const User = mongoose.model("user", userSchema);
 const newUser =(data)=>{
     const user = new User({
       userID:data.userID,
+      name:data.name,
         username:data.username,
         password:data.password,
         avatar:data.avatar,
@@ -32,9 +34,11 @@ const newUser =(data)=>{
       
 }
 
-const findUserByMail =async (req)=>{
+const findUserByMail =async (username)=>{
+
   try {
-    const res = await User.findOne({ username: req.body.username });
+    const res = await User.findOne({ username: username });
+   
     return res;
   } catch (error) {
     console.error(error);

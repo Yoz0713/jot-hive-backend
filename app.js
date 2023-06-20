@@ -4,28 +4,34 @@ const express = require("express")
 const cors = require("cors")
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const db = require("./database")
+ require("./database")
 const passport = require('passport')
 const {findUserByMail} = require("./schema/user")
 const checkEnvironment = require("./utils/checkEnvironment");
 const bcrypt = require("bcrypt");
 let app = express();
-//cors跨源
-app.use(cors());
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
 app.use(
-    session({
-      secret: 'yoz0713', // 應該換成您自己的密鑰
-      resave: false,
-      saveUninitialized: false,
-    })
-  );
+  session({
+    secret: 'yoz0713', // 應該換成您自己的密鑰
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 3600000 // 設定 session 的有效時間，這裡為 1 小時（以毫秒為單位）
+    }
+  })
+);
   //passport
   app.use(passport.initialize())
   app.use(passport.session())
   require('./passport')
+  
+
+//cors跨源
+app.use(cors({credentials:true,origin:true}));
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/uploads', express.static('uploads'));
+
 
   //確認email格式以及是否註冊過
   function checkSignUp(req,res,next){
@@ -33,7 +39,7 @@ app.use(
     if(emailReg.test(req.body.username) == false){
       res.status(400).send({ error: `e-mail格式錯誤` });
     }else{
-      findUserByMail(req).then((user)=>{
+      findUserByMail(req.body.username).then((user)=>{
         if(user){
           res.status(400).send({ error: `信箱已被使用` });
         }else{
@@ -42,8 +48,11 @@ app.use(
       })
     }
   }
+
+
+  //驗證登入帳密的middleware
   function checkLogin(req,res,next){
-    findUserByMail(req).then((user)=>{
+    findUserByMail(req.body.username).then((user)=>{
       if(!user){
         res.status(400).send({ error: `尚未註冊JotHive會員` });
       }else{
@@ -68,24 +77,40 @@ app.use(
  
   }
 
-app.get("/",(req,res)=>{
+  app.get("/",(req,res)=>{
     res.send("hello")
 })
+
+
+
+
+
 //註冊使用者
 app.post("/user/signUp",checkSignUp,userController.register)
+
+
 //帳密登入
 app.post("/user/login",checkLogin,userController.login)
+
+
 //確認登入狀態
 app.get("/loginStatus",(req,res)=>{
   console.log(req.session)
-    if (req.session.isLoggedIn) {
-        res.send(true);
+    if (req.session.user || req.isAuthenticated()) {
+        res.send(req.session);
       } else {
         res.send(false);
       }
 })
+
+
+
+
+
+
+
 //google登入
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }))
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile',"email"] }))
 app.get(
   '/auth/google/callback',
   passport.authenticate('google', {
@@ -93,6 +118,10 @@ app.get(
     failureRedirect: '/login'
   })
 )
+
+
+
+
 
 
 

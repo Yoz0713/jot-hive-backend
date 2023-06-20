@@ -1,6 +1,8 @@
 const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20')
 const checkEnvironment =require("../utils/checkEnvironment")
+const {newUser} = require("../schema/user")
+const {findUserByMail} = require("../schema/user")
 const users = {};
 
 // 新增google Strategy
@@ -14,17 +16,33 @@ passport.use(
         callbackURL: checkEnvironment.server("/auth/google/callback")
       },
       (accessToken, refreshToken, profile, done) => {
-  // profile._json內存放妳向google要的使用者資料
         if (profile._json) {
-            console.log(profile._json)
-          const id = profile._json.sub
-          users[id] = profile._json
+          const data = profile._json
+          //將資料存入mongoDB
+          findUserByMail(data.email).then((user)=>{
+            if(!user){
+              newUser({
+                userID:data.sub,
+                name:data.name,
+                username:data.email,
+                avatar:data.picture,
+                role:"normal",
+                createdAt:new Date(),
+              })
+            }else{
+              console.log(user)
+            }
+          })
           
-          //使用者資料存在req內，回傳到後面
-          return done(null, users[id])
+          const id = data.sub;
+          const user = {
+            id: id,
+            picture: data.picture
+            // 可以根據需要將其他屬性也加入使用者資料
+          };
+          return done(null, user);
         }
-        //失敗回傳false
-        return done(null, false)
+        return done(null, false);
       }
     )
   )
@@ -32,11 +50,10 @@ passport.use(
   // 這邊簡單來說就是簡化存在session內的資料，session存放使用者id
   // 再用使用者id找出詳細資料
   passport.serializeUser((user, done) => {
-    return done(null, user.sub)
+    return done(null, user)
   })
   passport.deserializeUser((userId, done) => {
-    const user = users[userId]
-    return done(null, user)
+    return done(null, userId)
   })
   
   module.exports = passport
