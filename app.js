@@ -6,9 +6,11 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
  require("./database")
 const passport = require('passport')
-const {findUserByMail} = require("./schema/user")
+const {findUserByMail,updateUserByMail} = require("./schema/user")
 const checkEnvironment = require("./utils/checkEnvironment");
 const bcrypt = require("bcrypt");
+const sendMail = require("./mailer");
+const { resolve } = require("path");
 let app = express();
 app.use(
   session({
@@ -40,7 +42,7 @@ app.use('/uploads', express.static('uploads'));
       res.status(400).send({ error: `e-mail格式錯誤` });
     }else{
       findUserByMail(req.body.username).then((user)=>{
-        if(user){
+        if(user && user.verify.status){
           res.status(400).send({ error: `信箱已被使用` });
         }else{
           next()
@@ -53,7 +55,7 @@ app.use('/uploads', express.static('uploads'));
   //驗證登入帳密的middleware
   function checkLogin(req,res,next){
     findUserByMail(req.body.username).then((user)=>{
-      if(!user){
+      if(!user || !user.verify.status){
         res.status(400).send({ error: `尚未註冊JotHive會員` });
       }else{
        const hashedPassword = user.password;
@@ -86,8 +88,47 @@ app.use('/uploads', express.static('uploads'));
 
 
 //註冊使用者
-app.post("/user/signUp",checkSignUp,userController.register)
+app.post("/user/signUp",checkSignUp,(req,res)=>{
+  const {username} = req.body;
+  const randomCode = String(Math.floor(Math.random()*1000000)).padEnd(6,Math.floor(Math.random()*10))
+  
+  sendMail({
+    from:  'jothive2023@gmail.com',
+    to: username,
+    subject: '歡迎加入jotHive，請輸入以下驗證碼',
+    text: 'This is the plain text body of t`he email',
+    html: `<h3>您的驗證碼:${randomCode}</h3>`,
+  }).then((data)=>{
+    if(data == username){
+      userController.register(req,res,randomCode)
+    }else{
+      res.send({error:"無效信箱!"})
+    }
+  })
 
+})
+app.post("/user/register",(req,res)=>{
+  const verifyCodeFromUser = req.body.verifyCode;
+  findUserByMail(req.body.username).then((user)=>{
+    console.log(verifyCodeFromUser,user.verify.verifyCode)
+    if(verifyCodeFromUser === user.verify.verifyCode){
+      res.send({success:"註冊成功"})
+      const updateVerifyStatus = {
+        verify:
+        {
+          status:true,
+          verfifyCode:null
+        }
+      }
+      updateUserByMail(req.body.username,updateVerifyStatus)
+      
+    }else{
+      console.log("驗證碼錯誤")
+      res.send({error:"驗證碼錯誤"})
+    }
+  })
+  
+})
 
 //帳密登入
 app.post("/user/login",checkLogin,userController.login)
@@ -96,8 +137,8 @@ app.post("/user/login",checkLogin,userController.login)
 //確認登入狀態
 app.get("/loginStatus",(req,res)=>{
   console.log(req.session)
-    if (req.session.user || req.isAuthenticated()) {
-        res.send(req.session);
+    if (req.session.userID || req.isAuthenticated()) {
+        res.send("成功登入");
       } else {
         res.send(false);
       }
