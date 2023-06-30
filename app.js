@@ -110,7 +110,6 @@ app.post("/user/signUp",checkSignUp,(req,res)=>{
 app.post("/user/register",(req,res)=>{
   const verifyCodeFromUser = req.body.verifyCode;
   findUserByMail(req.body.username).then((user)=>{
-    console.log(verifyCodeFromUser,user.verify.verifyCode)
     if(verifyCodeFromUser === user.verify.verifyCode){
       res.send({success:"註冊成功"})
       const updateVerifyStatus = {
@@ -120,6 +119,7 @@ app.post("/user/register",(req,res)=>{
           verfifyCode:null
         }
       }
+      
       updateUserByMail(req.body.username,updateVerifyStatus)
       
     }else{
@@ -136,7 +136,6 @@ app.post("/user/login",checkLogin,userController.login)
 
 //確認登入狀態
 app.get("/loginStatus",(req,res)=>{
-  console.log(req.session)
     if (req.session.userID || req.isAuthenticated()) {
         res.send("成功登入");
       } else {

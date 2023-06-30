@@ -3,6 +3,7 @@ const GoogleStrategy = require('passport-google-oauth20')
 const checkEnvironment =require("../utils/checkEnvironment")
 const {newUser} = require("../schema/user")
 const {findUserByMail} = require("../schema/user")
+const {sendMail} = require("../mailer")
 const users = {};
 
 // 新增google Strategy
@@ -21,6 +22,9 @@ passport.use(
           //將資料存入mongoDB
           findUserByMail(data.email).then((user)=>{
             if(!user){
+              const randomCode = String(Math.floor(Math.random()*1000000)).padEnd(6,Math.floor(Math.random()*10))
+
+              
               newUser({
                 userID:data.sub,
                 name:data.name,
@@ -28,9 +32,11 @@ passport.use(
                 avatar:data.picture,
                 role:"normal",
                 createdAt:new Date(),
+                verify:{
+                  status:true,
+                  verifyCode:null
+                }
               })
-            }else{
-              console.log(user)
             }
           })
           
