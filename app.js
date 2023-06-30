@@ -137,9 +137,9 @@ app.post("/user/login",checkLogin,userController.login)
 //確認登入狀態
 app.get("/loginStatus",(req,res)=>{
     if (req.session.userID || req.isAuthenticated()) {
-        res.send("成功登入");
+        res.send({status:true});
       } else {
-        res.send(false);
+        res.send({status:false});
       }
 })
 
